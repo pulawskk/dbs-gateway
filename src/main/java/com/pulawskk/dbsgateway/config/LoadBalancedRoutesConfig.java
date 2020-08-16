@@ -14,11 +14,18 @@ public class LoadBalancedRoutesConfig {
     public RouteLocator loadBalancedRoutes(RouteLocatorBuilder builder) {
         return builder.routes()
                 .route(r -> r.path("/api/v1/burgers/*", "/api/v1/burgers")
+                        .filters(f -> f.circuitBreaker(cb -> cb.setName("burgersCB")
+                                .setFallbackUri("forward:/burgers-failover")
+                                .setRouteId("dbs-food-failover")
+                        ))
                         .uri("lb://dbs-food")
                         .id("dbs-food"))
                 .route(r -> r.path("/api/v1/orders")
                         .uri("lb://dbs-order")
                         .id("dbs-order"))
+                .route(r -> r.path("/burgers-failover")
+                        .uri("lb://dbs-food-failover")
+                        .id("dbs-food-failover"))
                 .build();
     }
 }
